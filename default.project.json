@@ -1,0 +1,32 @@
+{
+  "name": "RobloxHTMLRenderer",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "BROX": {
+        "$path": "src/BROX"
+      }
+    },
+
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+		
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
