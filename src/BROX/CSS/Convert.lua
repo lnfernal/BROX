@@ -209,7 +209,7 @@ return {
 			CornerRadius = UDim.new(0, Amount),
 		};
 		if (#Data > 1) then
-			warn("Only one corner radius is supported due to roblox, taking first.");
+			warn("Only one border radius is supported due to roblox, using first one provided.");
 		end
 	end,
 } :: {[string]: (Assignment: string, OutStyle: Style, CSSVariableName: string) -> ()}
