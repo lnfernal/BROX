@@ -1,1 +1,1 @@
-print("Hello world, from server!")
+require(game.ReplicatedStorage:WaitForChild("BROX"):WaitForChild("Brox")):RunTests();

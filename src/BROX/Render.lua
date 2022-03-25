@@ -18,7 +18,7 @@ end
 
 function Render:RenderNode(Node: Node.Node)
 	local Player = game.Players:GetPlayers()[1] or game.Players.PlayerAdded:Wait();
-	local RootParent = Player:WaitForChild("PlayerGui"):WaitForChild("ScreenGui");
+	local RootParent = Player:WaitForChild("PlayerGui"):FindFirstChild("ScreenGui") or Instance.new("ScreenGui", Player.PlayerGui);
 	
 	warn("Rendering");
 	CSS:ConvertCSS([[
