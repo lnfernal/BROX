@@ -3,6 +3,10 @@ local StringUtil = require(script.Parent:WaitForChild("StringUtil"));
 local Convert = require(script:WaitForChild("Convert"));
 local StyleType = require(script:WaitForChild("StyleType"));
 
+local Displays = {
+	block = require(script:WaitForChild("Display"):WaitForChild("block"))
+};
+
 type TagStyle = StyleType.TagStyle; --[[{
 	Font: Enum.Font?,
 	TextSize: number?,
@@ -15,29 +19,29 @@ local CSS = {
 		body = {
 			BackgroundColor3 = Color3.new(1, 1, 1),
 			Size = UDim2.new(0, 500, 0, 500),
-			
+
 			__children = {
-				["UIListLayout"] = {
-					FillDirection = Enum.FillDirection.Vertical,
-					Sortorder = Enum.SortOrder.LayoutOrder,
-				},
-				["UIPadding"] = {
-					PaddingTop = UDim.new(0, 8),
-					PaddingLeft = UDim.new(0, 8)
-				}
 			}
 		},
 		h1 = {
-			Font = Enum.Font.Arial,
-			TextSize = 24,
-			TextColor3 = Color3.new(0, 0, 0),
+			__children = {
+				__text = {
+					Font = Enum.Font.Arial,
+					TextSize = 24,
+					TextColor3 = Color3.new(0, 0, 0),
+				}
+			},
 			BackgroundTransparency = 1,
 			AutomaticSize = Enum.AutomaticSize.XY
 		},
 		p = {
-			Font = Enum.Font.Arial,
-			TextSize = 12,
-			TextColor3 = Color3.new(0, 0, 0),
+			__children = {
+				__text = {
+					Font = Enum.Font.Arial,
+					TextSize = 12,
+					TextColor3 = Color3.new(0, 0, 0),
+				}
+			},
 			BackgroundTransparency = 1,
 			AutomaticSize = Enum.AutomaticSize.XY
 		}
@@ -76,31 +80,78 @@ function CSS:GetStyles(TagName: string, ClassName: string)
 	end
 end
 
-function CSS:ApplyStyle(Object:Instance, Element: Node.Node?, Style: TagStyle?)
+local function GetValue(Val)
+	if (type(Val) == "table") then
+		if (Val.type == "Unit") then
+			return Val:GetPixels();
+		else
+			warn("Unknown table value type");
+		end
+	end
+	return Val;
+end
+
+function CSS:ApplyStyle(Element: Node.Node?, Object: Instance?, Style: TagStyle?)
 	--TODO: Element Class Name
 	local Styles = Style;
 	if (Element) then
-		Styles = self:GetStyles(Element.nodeName, "");
+		Styles = self:GetStyles(Element.nodeName, Element.attributes.class);
+		Element.internal.UpdateStyles = function() end
+		Object = Element.internal.Instance;
+	end
+	if (not Object) then
+		warn("Something went wrong for node" .. (Element.nodeName or "##ERROR##"));
+		return;
 	end
 	if (not Styles) then
 		warn("No styles for '" .. (Element.nodeName or "##ERROR##") .. "'");
 		return;
 	end
-	for Property, Value in pairs(Styles) do
-		if (Property == "__children") then
-			for class, childStyle in pairs(Value) do
-				local childInstance = Instance.new(class);
-				print("Applying child style", childStyle);
-				self:ApplyStyle(childInstance, nil, childStyle);
-				childInstance.Parent = Object;
-			end
-			continue;
+	if (Element) then
+		Element.internal.Styles = Styles;
+		Element.internal.GetSize = self.GetSize;
+		print("Put get size function")
+		if (not Styles.Display) then
+			Styles.Display = "block"; -- Default Display
 		end
-		xpcall(function()
-			Object[Property] = Value;
-		end, function(err)
-			warn(err)
-		end)
+	end
+	local UpdateStyles = function() --! NOTE: How safe is this memory wise? a first-class function like this
+		print("UPDATING STYLE!!");
+		for Property, Value in pairs(Styles) do
+			if (Property == "__children") then
+				for class, childStyle in pairs(Value) do
+					local childInstance = Object:FindFirstChild(class) or Instance.new(class);
+					self:ApplyStyle(nil, childInstance, childStyle);
+					childInstance.Parent = Object;
+				end
+				continue;
+			end
+			if (Property == "Display") then
+				local display = Displays[Value];
+				if (not display) then
+					error("Display " .. display .. " not found. (Exiting)");
+				elseif (Element) then
+					Element.internal.Display = display.new(Element);
+				else
+					warn("Attempt to apply display on non element");
+				end
+			else
+				xpcall(function()
+					local RealValue = Value;
+					if (typeof(Value) == "table" and Value.type == "Unit") then
+						RealValue = Value:GetPixels();
+					end
+					Object[Property] = RealValue;
+				end, function(err)
+					warn(err)
+				end)
+			end
+		end
+	end
+	if (Element) then
+		Element.internal.UpdateStyles = UpdateStyles;
+	else
+		UpdateStyles();
 	end
 end
 local SampleCSS = [[

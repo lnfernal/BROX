@@ -9,7 +9,8 @@ function Node.__new():Node
 		childNodes = {} :: {Node},
 		attributes = {} :: {[string]: boolean | number | string},
 		value = "" ::string,
-		parentNode = nil :: Node?
+		parentNode = nil :: Node?,
+		internal = {} :: {[string]: any}
 	}, { __index = Node });
 end
 export type Node = typeof(Node.__new());
